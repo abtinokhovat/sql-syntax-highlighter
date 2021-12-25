@@ -20,6 +20,23 @@ namespace sql_syntax_highlighter
                 Codes.Select(startIndex, StopIndex);
                 Codes.SelectionColor = Color.Red;
             }
+
+            stringCounts.Text = strings.Count.ToString();
+        }
+
+        public void HighlightComments()
+        {
+            var strings = Regex.Matches(Codes.Text, @"/\*(?>(?:(?!\*/|/\*).)*)(?>(?:/\*(?>(?:(?!\*/|/\*).)*)\*/(?>(?:(?!\*/|/\*).)*))*).*?\*/|--.*?\r?[\n]");
+
+            foreach (Match m in strings)
+            {
+                int startIndex = m.Index;
+                int StopIndex = m.Length;
+                Codes.Select(startIndex, StopIndex);
+                Codes.SelectionColor = Color.Green;
+            }
+
+            commentCounts.Text = strings.Count.ToString();
         }
 
         public void Highlightkeywords()
@@ -91,6 +108,9 @@ namespace sql_syntax_highlighter
                 , "exists"
                 ,"from"
                 ,"end"
+                ,"set"
+                ,"declare"
+                ,"inner"
             };
 
             var finalTokens = string.Empty;
@@ -100,10 +120,9 @@ namespace sql_syntax_highlighter
                 finalTokens += $"(?:^|\\W){token}(?:$|\\W)|";
             }
 
-
-
             var keywords = new Regex(finalTokens, RegexOptions.IgnoreCase);
             var matches = keywords.Matches(Codes.Text);
+
             foreach (Match m in matches)
             {
                 int startIndex = m.Index;
@@ -112,15 +131,36 @@ namespace sql_syntax_highlighter
                 Codes.SelectionColor = Color.Blue;
             }
 
+            keywordCounts.Text = matches.Count.ToString();
+
         }
 
-        private void Codes_KeyPress(object sender, KeyPressEventArgs e)
+        public void HighlightVariables()
+        {
+            var strings = Regex.Matches(Codes.Text, @"@\w+");
+
+            foreach (Match m in strings)
+            {
+                int startIndex = m.Index;
+                int StopIndex = m.Length;
+                Codes.Select(startIndex, StopIndex);
+                Codes.SelectionColor = Color.Gray;
+            }
+
+            variableCounts.Text = strings.Count.ToString();
+
+        }
+
+        private void Codes_TextChanged(object sender, EventArgs e)
         {
             int StartCursorPosition = Codes.SelectionStart;
             Codes.SelectionStart = StartCursorPosition;
             Codes.SelectionColor = Color.Black;
+
             Highlightkeywords();
             HighlightStrings();
+            HighlightComments();
+            HighlightVariables();
         }
     }
 }
